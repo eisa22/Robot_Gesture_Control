@@ -24,6 +24,7 @@ class HandStateDetector:
         self.close_count = 0
         self.last_direction = None
         self.last_direction_change_time = 0
+        self.running = True
 
     def get_hand_state(self, hand_landmarks, image):
         wrist = hand_landmarks.landmark[self.mp_hands.HandLandmark.WRIST]
@@ -149,54 +150,53 @@ class HandStateDetector:
 
     def run(self):
         cap = cv2.VideoCapture(0)
-        target_coordinates = Positions.home_position
 
+        while cap.isOpened() and self.running:
+            success, image = cap.read()
+            if not success:
+                print("Ignoring empty camera frame.")
+                continue
 
+            image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+            pose_results = self.pose.process(image)
+            hand_results = self.hands.process(image)
 
-        success, image = cap.read()
-        if not success:
-            print("Ignoring empty camera frame.")
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
+            arm_direction = None
+            if pose_results.pose_landmarks:
+                self.mp_drawing.draw_landmarks(image, pose_results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS)
+                self.toggle_system(pose_results.pose_landmarks)
+                landmarks = pose_results.pose_landmarks.landmark
+                shoulder = landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER]
+                elbow = landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW]
+                wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
+                arm_direction = self.analyze_arm_direction(shoulder, elbow, wrist)
 
-        image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-        pose_results = self.pose.process(image)
-        hand_results = self.hands.process(image)
+            target_coordinates = None
+            gripper_state = None
+            if hand_results.multi_hand_landmarks:
+                for hand_landmarks in hand_results.multi_hand_landmarks:
+                    self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+                    gripper_state, close_count = self.get_hand_state(hand_landmarks, image)
+                    target_coordinates = self.hand_to_position(arm_direction, self.gripper_state)
+                    if self.process_gripper_state(close_count):
+                        print(f'Gripper state changed to {self.gripper_state}')
 
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            cv2.putText(image, f'Arm Direction: {arm_direction}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(image, f'Gripper State: {self.gripper_state}', (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2, cv2.LINE_AA)
+            cv2.putText(image, f'System ON/OFF: {"ON" if self.system_on_off else "OFF"}', (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.imshow('Pose and Hand Tracking', image)
 
-        if pose_results.pose_landmarks:
-            self.mp_drawing.draw_landmarks(image, pose_results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS)
-            self.toggle_system(pose_results.pose_landmarks)
-            landmarks = pose_results.pose_landmarks.landmark
-            shoulder = landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER]
-            elbow = landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW]
-            wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
-            arm_direction = self.analyze_arm_direction(shoulder, elbow, wrist)
+            if cv2.waitKey(5) & 0xFF == 27:
+                self.running = False
+                break
 
-        if hand_results.multi_hand_landmarks:
-            for hand_landmarks in hand_results.multi_hand_landmarks:
-                self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
-                hand_state, close_count = self.get_hand_state(hand_landmarks, image)
-                target_coordinates = self.hand_to_position(arm_direction, self.gripper_state)
-                if self.process_gripper_state(close_count):
-                    print(f'Gripper state changed to {self.gripper_state}')
+            yield target_coordinates, self.gripper_state  # Yield the results for the main thread
 
-
-
-        cv2.putText(image, f'Arm Direction: {arm_direction}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2,
-                    cv2.LINE_AA)
-        cv2.putText(image, f'Gripper State: {self.gripper_state}', (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2,
-                    cv2.LINE_AA)
-        cv2.putText(image, f'System ON/OFF: {"ON" if self.system_on_off else "OFF"}', (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                    (0, 255, 0), 2, cv2.LINE_AA)
-        cv2.imshow('Pose and Hand Tracking', image)
-
-        if cv2.waitKey(5) & 0xFF == 27:
-            cv2.destroyAllWindows()
-
-
-        return target_coordinates, self.gripper_state
+        cap.release()
+        cv2.destroyAllWindows()
 
 # = HandStateDetector()
 #hand_state_detector.run()
