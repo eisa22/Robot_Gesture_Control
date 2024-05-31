@@ -19,7 +19,7 @@ class HandStateDetector:
         self.system_on_off = False  # Initial state of the system
         self.gripper_state = False  # Initial state of the gripper
         self.pose_start_time = False  # Time when the pose is first detected
-        self.last_state = 'OPEN'
+        self.last_state = 'CLOSED'
         self.last_closed_time = None
         self.close_count = 0
         self.last_direction = None
@@ -41,7 +41,7 @@ class HandStateDetector:
                            for tip in fingertips)
 
         current_time = time.time()
-        if open_fingers >= 3:
+        if open_fingers >= 2:
             self.last_state = 'OPEN'
         else:
             if self.last_state == 'OPEN':
@@ -120,7 +120,7 @@ class HandStateDetector:
         target_position = None  # Initialize target_position to None
         print("Handstate: ", hand_state)
         print("Gripper State: ", gripper_state)
-        if (hand_state == 'BOTTOM' and gripper_state):
+        if hand_state == 'BOTTOM':
             print("Case BOTTOM down - Robot moves to grid 1")
             target_position = Positions.grid1_position_hover
 
@@ -128,13 +128,14 @@ class HandStateDetector:
             print("Case BOTTOM RIGHT HOVER - Robot moves to grid 2 hover")
             target_position = Positions.grid2_position_hover
 
-        elif hand_state == 'TOP':
-            print("Case TOP HOVER - Robot moves to grid 3 hover")
+        elif hand_state == 'TOP RIGHT':
+            print("Case TOP RIGHT HOVER - Robot moves to grid 3 hover")
             target_position = Positions.grid3_position_hover
 
-        elif hand_state == 'TOP RIGHT':
+        elif hand_state == 'TOP':
             print("Case TOP RIGHT HOVER - Robot moves to grid 4 hover")
             target_position = Positions.grid4_position_hover
+
         else:
             print("No position detected - Adjust position!")
         return target_position
@@ -165,13 +166,13 @@ class HandStateDetector:
                 wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
                 arm_direction = self.analyze_arm_direction(shoulder, elbow, wrist)
             gripper_state_bool = False
-            target_coordinates = Positions.home_position
-            gripper_state = False
+            target_coordinates = None
+            gripper_state = 'CLOSED'
             if hand_results.multi_hand_landmarks:
                 for hand_landmarks in hand_results.multi_hand_landmarks:
                     self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     gripper_state, close_count = self.get_hand_state(hand_landmarks, image)
-                    if gripper_state == 'CLOSED':
+                    if self.gripper_state == 'CLOSED':
                         gripper_state_bool = False
                     else:
                         gripper_state_bool = True
