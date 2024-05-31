@@ -4,121 +4,66 @@ from Positions import Positions
 
 Positions = Positions()
 
-def StartUp(myedo):
-    myedo.init7Axes()
-    print("Init startup")
-    time.sleep(5)
-    myedo.disengageStd()
-    time.sleep(5)
-    myedo.calibAxes() # Mandatory in HOME POSITION
-    myedo.disengageSafe()
-    myedo.disengageSin()
+class Robot_Control:
+    def __init__(self, ip_address="10.42.0.49"):
+        self.positions = Positions
+        self.myedo = edo(ip_address)
+        self.myedo.disconnect()
+        self.myedo.connect()
+        self.myedo.unblock()
+        self.myedo.verboseOn()
+        self.StartUp()
+        self.myedo.unblock()
+        print("success")
+        time.sleep(1.0)
 
-def handle_input(choice):
-    if choice == '1':
-        print("Case 1 - Robot moves to grid 1")
-        target_position = Positions.grid1_position
-        gripper_open = False
-    elif choice == '1o':
-        print("Case 1h - Robot moves to grid 1 hover")
-        target_position = Positions.grid1_position
-        gripper_open = True
+    def StartUp(self):
+        #myedo = edo("10.42.0.49")  # ('10.42.0.49') #192.168.12.1
+        self.myedo.disconnect()
+        self.myedo.connect()
+        self.myedo.unblock()
+        self.myedo.verboseOn()
 
-    elif choice == '1h':
-        print("Case 1h - Robot moves to grid 1 hover")
-        target_position = Positions.grid1_position_hover
-        gripper_open = False
-    elif choice == '1ho':
-        print("Case 1h - Robot moves to grid 1 hover")
-        target_position = Positions.grid1_position_hover
-        gripper_open = True
+        self.myedo.init7Axes()
+        print("Init startup")
+        time.sleep(5)
+        self.myedo.disengageStd()
+        time.sleep(5)
+        self.myedo.calibAxes()  # Mandatory in HOME POSITION
+        self.myedo.disengageSafe()
+        self.myedo.disengageSin()
 
-    elif choice == '2':
-        print("Case 2 - Robot moves to grid 2")
-        target_position = Positions.grid2_position
-        gripper_open = False
-    elif choice == '2o':
-        print("Case 2 - Robot moves to grid 2")
-        target_position = Positions.grid2_position
-        gripper_open = True
-
-    elif choice == '2h':
-        print("Case 2h - Robot moves to grid 2 hover")
-        target_position = Positions.grid2_position_hover
-        gripper_open = False
-    elif choice == '2ho':
-        print("Case 2h - Robot moves to grid 2 hover")
-        target_position = Positions.grid2_position_hover
-        gripper_open = True
-
-    elif choice == '3':
-        print("Case 3 - Robot moves to grid 3")
-        target_position = Positions.grid3_position
-        gripper_open = False
-    elif choice == '3o':
-        print("Case 3 - Robot moves to grid 3")
-        target_position = Positions.grid3_position
-        gripper_open = True
-
-    elif choice == '3h':
-        print("Case 3h - Robot moves to grid 3 hover")
-        target_position = Positions.grid3_position_hover
-        gripper_open = False
-    elif choice == '3ho':
-        print("Case 3h - Robot moves to grid 3 hover")
-        target_position = Positions.grid3_position_hover
-        gripper_open = True
-
-    elif choice == '4':
-        print("Case 4 - Robot moves to grid 4")
-        target_position = Positions.grid4_position
-        gripper_open = False
-    elif choice == '4o':
-        print("Case 4 - Robot moves to grid 4")
-        target_position = Positions.grid4_position
-        gripper_open = True
-
-    elif choice == '4h':
-        print("Case 4h - Robot moves to grid 4 hover")
-        target_position = Positions.grid4_position_hover
-        gripper_open = False
-    elif choice == '4ho':
-        print("Case 4h - Robot moves to grid 4 hover")
-        target_position = Positions.grid4_position_hover
-        gripper_open = True
-
-    elif choice == 'H':
-        print("Case H - Robot moves to home")
-        target_position = Positions.home_position
-        gripper_open = False
-    elif choice == 'B':
-        print("Case H - Robot moves to home")
-        target_position = Positions.arm_bottom
-        gripper_open = False
-    else:
-        print("Invalid input. Please enter 1, 2, 3, 4 or H + h for hovering.")
-    return target_position, gripper_open
-
-def move_Robot(target_position, gripper_state):
-
-    if gripper_state:
-        myedo.moveGripper(80)
-    else:
-        myedo.moveGripper(50)
-    myedo.moveJoints(*target_position)
-    time.sleep(1)
-    return True
+        self.myedo.unblock()
+        print("success")
+        time.sleep(1.0)
 
 
-def wait_until_position_reached(current_position, target_position):
-    while True:
-        # If the current position is the same as the target position, break the loop
-        if current_position == target_position:
-            print("Target Position reached!")
-            break
-        # Otherwise, wait for a short period before checking again
-        time.sleep(0.1)
-    return True
+
+    def move_Robot(self, target_position, gripper_state):
+        print("...............Current Command in Robot Control.........: ", target_position, gripper_state)
+        if target_position is None:
+            pass
+        else:
+            if gripper_state:
+                self.myedo.moveGripper(80)
+                print("Gripper open ...............................")
+            else:
+                self.myedo.moveGripper(50)
+                print("Gripper closed ...............................")
+            self.myedo.moveJoints(*target_position)
+        time.sleep(1)
+        return True
+
+
+    def wait_until_position_reached(self, current_position, target_position):
+        while True:
+            # If the current position is the same as the target position, break the loop
+            if current_position == target_position:
+                print("Target Position reached!")
+                break
+            # Otherwise, wait for a short period before checking again
+            time.sleep(0.1)
+        return True
 
 
 
