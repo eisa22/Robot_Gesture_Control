@@ -134,7 +134,8 @@ class HandStateDetector:
 
         elif hand_state == 'TOP':
             print("Case TOP RIGHT HOVER - Robot moves to grid 4 hover")
-            target_position = Positions.grid4_position_hover
+            target_position = Positions.home_position
+
 
         else:
             print("No position detected - Adjust position!")
@@ -167,12 +168,12 @@ class HandStateDetector:
                 arm_direction = self.analyze_arm_direction(shoulder, elbow, wrist)
             gripper_state_bool = False
             target_coordinates = None
-            gripper_state = 'CLOSED'
+
             if hand_results.multi_hand_landmarks:
                 for hand_landmarks in hand_results.multi_hand_landmarks:
                     self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     gripper_state, close_count = self.get_hand_state(hand_landmarks, image)
-                    if self.gripper_state == 'CLOSED':
+                    if self.last_state == 'CLOSED':
                         gripper_state_bool = False
                     else:
                         gripper_state_bool = True
@@ -190,7 +191,7 @@ class HandStateDetector:
                 self.running = False
                 break
 
-            yield target_coordinates, gripper_state_bool  # Yield the results for the main thread
+            yield target_coordinates, self.gripper_state  # Yield the results for the main thread
 
         cap.release()
         cv2.destroyAllWindows()
