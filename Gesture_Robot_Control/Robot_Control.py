@@ -17,16 +17,26 @@ class Robot_Control:
         print("success")
         time.sleep(1.0)
 
-    def StartUp(slef):
-        myedo = edo("10.42.0.49")
-        myedo.init7Axes()
+    def StartUp(self):
+        #myedo = edo("10.42.0.49")  # ('10.42.0.49') #192.168.12.1
+        self.myedo.disconnect()
+        self.myedo.connect()
+        self.myedo.unblock()
+        self.myedo.verboseOn()
+
+        self.myedo.init7Axes()
         print("Init startup")
         time.sleep(5)
-        myedo.disengageStd()
+        self.myedo.disengageStd()
         time.sleep(5)
-        myedo.calibAxes() # Mandatory in HOME POSITION
-        myedo.disengageSafe()
-        myedo.disengageSin()
+        self.myedo.calibAxes()  # Mandatory in HOME POSITION
+        self.myedo.disengageSafe()
+        self.myedo.disengageSin()
+
+        self.myedo.unblock()
+        print("success")
+        time.sleep(1.0)
+
 
     def handle_input(self, choice):
         if choice == '1':
@@ -114,12 +124,14 @@ class Robot_Control:
         return target_position, gripper_open
 
     def move_Robot(self, target_position, gripper_state):
-
+        print("...............Current Command in Robot Control.........: ", target_position, gripper_state)
+        if target_position is None:
+            target_position = Positions.home_position
         if gripper_state:
-            myedo.moveGripper(80)
+            self.myedo.moveGripper(80)
         else:
-            myedo.moveGripper(50)
-        myedo.moveJoints(self, *target_position)
+            self.myedo.moveGripper(50)
+        self.myedo.moveJoints(*target_position)
         time.sleep(1)
         return True
 

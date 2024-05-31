@@ -164,9 +164,9 @@ class HandStateDetector:
                 elbow = landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW]
                 wrist = landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST]
                 arm_direction = self.analyze_arm_direction(shoulder, elbow, wrist)
-
-            target_coordinates = None
-            gripper_state = None
+            gripper_state_bool = False
+            target_coordinates = Positions.home_position
+            gripper_state = False
             if hand_results.multi_hand_landmarks:
                 for hand_landmarks in hand_results.multi_hand_landmarks:
                     self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
