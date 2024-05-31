@@ -83,13 +83,15 @@ class HandStateDetector:
     def analyze_arm_direction(self, shoulder, elbow, wrist):
         """ Determine the arm direction based on the angle of the arm. """
         angle = math.atan2(wrist.y - shoulder.y, wrist.x - shoulder.x) * 180 / math.pi
-        if 45 <= angle <= 135:
+        if 60 <= angle <= 135:
             direction = 'BOTTOM'
-        elif 0 <= angle < 45:
+        elif 20 <= angle < 60:
             direction = 'BOTTOM RIGHT'
-        elif -135 < angle < -45:
+        elif -20 <= angle < 20:
+            direction = 'NEUTRAL'
+        elif -135 < angle < -60:
             direction = 'TOP'
-        elif -45 < angle < 0:
+        elif -60 < angle < -20:
             direction = 'TOP RIGHT'
         else:
             direction = None
@@ -120,20 +122,24 @@ class HandStateDetector:
         target_position = None  # Initialize target_position to None
         print("Handstate: ", hand_state)
         print("Gripper State: ", gripper_state)
-        if hand_state == 'BOTTOM':
-            print("Case BOTTOM down - Robot moves to grid 1")
+        if hand_state == 'BOTTOM RIGHT':
+            print("Case BOTTOM down - Robot moves to grid 1 hover")
             target_position = Positions.grid1_position_hover
 
-        elif hand_state == 'BOTTOM RIGHT':
-            print("Case BOTTOM RIGHT HOVER - Robot moves to grid 2 hover")
-            target_position = Positions.grid2_position_hover
+        elif hand_state == 'BOTTOM':
+            print("Case BOTTOM RIGHT HOVER - Robot moves to grid 1 ")
+            target_position = Positions.grid1_position
 
         elif hand_state == 'TOP RIGHT':
-            print("Case TOP RIGHT HOVER - Robot moves to grid 3 hover")
-            target_position = Positions.grid3_position_hover
+            print("Case TOP RIGHT HOVER - Robot moves to grid 4 hover")
+            target_position = Positions.grid4_position_hover
 
         elif hand_state == 'TOP':
-            print("Case TOP RIGHT HOVER - Robot moves to grid 4 hover")
+            print("Case TOP RIGHT HOVER - Robot moves to grid 4 ")
+            target_position = Positions.grid4_position
+
+        elif hand_state == 'NEUTRAL':
+            print("Case TOP RIGHT HOVER - Robot moves to home")
             target_position = Positions.home_position
 
 
