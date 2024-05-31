@@ -2,6 +2,7 @@
 
 This project demonstrates controlling an e.DO robot using hand gestures detected via Mediapipe. The system captures hand gestures through a camera, processes them to recognize specific gestures, and then translates these gestures into commands to control the e.DO robot.
 
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Features](#features)
