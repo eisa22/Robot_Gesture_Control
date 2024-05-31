@@ -122,25 +122,16 @@ class HandStateDetector:
         print("Gripper State: ", gripper_state)
         if (hand_state == 'BOTTOM' and gripper_state):
             print("Case BOTTOM down - Robot moves to grid 1")
-            target_position = Positions.grid1_position
-        elif hand_state == 'BOTTOM':
-            print("Case BOTTOM HOVER - Robot moves to grid 1 hover")
             target_position = Positions.grid1_position_hover
-        elif (hand_state == 'BOTTOM RIGHT' and gripper_state):
-            print("Case BOTTOM RIGHT - Robot moves to grid 2")
-            target_position = Positions.grid2_position
+
         elif hand_state == 'BOTTOM RIGHT':
             print("Case BOTTOM RIGHT HOVER - Robot moves to grid 2 hover")
             target_position = Positions.grid2_position_hover
-        elif (hand_state == 'TOP' and gripper_state):
-            print("Case TOP - Robot moves to grid 3")
-            target_position = Positions.grid3_position
+
         elif hand_state == 'TOP':
             print("Case TOP HOVER - Robot moves to grid 3 hover")
             target_position = Positions.grid3_position_hover
-        elif (hand_state == 'TOP RIGHT' and gripper_state):
-            print("Case TOP RIGHT - Robot moves to grid 4")
-            target_position = Positions.grid4_position
+
         elif hand_state == 'TOP RIGHT':
             print("Case TOP RIGHT HOVER - Robot moves to grid 4 hover")
             target_position = Positions.grid4_position_hover
@@ -180,6 +171,11 @@ class HandStateDetector:
                 for hand_landmarks in hand_results.multi_hand_landmarks:
                     self.mp_drawing.draw_landmarks(image, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     gripper_state, close_count = self.get_hand_state(hand_landmarks, image)
+                    if gripper_state == 'CLOSED':
+                        gripper_state_bool = False
+                    else:
+                        gripper_state_bool = True
+
                     target_coordinates = self.hand_to_position(arm_direction, self.gripper_state)
                     if self.process_gripper_state(close_count):
                         print(f'Gripper state changed to {self.gripper_state}')
@@ -193,10 +189,16 @@ class HandStateDetector:
                 self.running = False
                 break
 
-            yield target_coordinates, self.gripper_state  # Yield the results for the main thread
+            yield target_coordinates, gripper_state_bool  # Yield the results for the main thread
 
         cap.release()
         cv2.destroyAllWindows()
 
-# = HandStateDetector()
-#hand_state_detector.run()
+if __name__ == "__main__":
+    handstate_detector = HandStateDetector()
+    handstate_detector.run()
+    # Print the target position and gripper state
+    for target_position, gripper_state in handstate_detector.run():
+        print(f'Target Position: {target_position}, Gripper State: {gripper_state}')
+
+

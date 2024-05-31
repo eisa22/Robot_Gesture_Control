@@ -1,46 +1,35 @@
 from Gesture_classifier import HandStateDetector
 from Robot_Control import Robot_Control
-from pyedo import edo
+import threading
+from queue import Queue
 import time
-import keyboard
-from Positions import Positions
 
-# Global flag to bring robot to home Position when pressing R key
-emergancy_stop_off = True  # Start with printing enabled
+def run_handstate_detector(handstate_detector, move_queue):
+    for target_position, gripper_state in handstate_detector.run():
+        print(f"Target Coordinates: {target_position}, Gripper State: {gripper_state}")
+        move_queue.put((target_position, gripper_state))
 
-Positions = Positions()
-def on_r_key():
-    global emergancy_stop
-    emergancy_stop = not emergancy_stop  # Toggle the flag when 'R' is pressed
+def run_robot_control(robot_control, move_queue):
+    while True:
+        if not move_queue.empty():
+            target_position, gripper_state = move_queue.get()
+            robot_control.moveRobot(target_position, gripper_state)
+            time.sleep(3.0)
 
 if __name__ == "__main__":
     handstate_detector = HandStateDetector()
-    robot_control = Robot_Control()
-    print("Check1")
+    robot_control = Robot_Control("10.42.0.49")  # Initialize with the IP address
 
-    robot_control = Robot_Control()
-    robot_control.StartUp()
-    print("success")
-    time.sleep(1.0)
+    move_queue = Queue()
 
+    # Create threads for the handstate_detector and the robot control
+    handstate_detector_thread = threading.Thread(target=run_handstate_detector, args=(handstate_detector, move_queue))
+    robot_control_thread = threading.Thread(target=run_robot_control, args=(robot_control, move_queue))
 
-    while True:
-        keyboard.add_hotkey('r', on_r_key)
-        target_position, gripper_state = handstate_detector.run()
-        print("Check2")
-        if target_position is None:
-            print("No position received")
-            break
+    # Start the threads
+    handstate_detector_thread.start()
+    robot_control_thread.start()
 
-        if not emergancy_stop_off:
-            # Perform Robot Control
-            robot_control.move_Robot(Positions.home_position)
-            print("DriveHOME")
-            time.sleep(3.0)
-
-        else:
-            print(" ROBOT MOVES BE CAREFUL!!")
-            # Move Robot to home position
-            robot_control.move_Robot(target_position, gripper_state)
-            time.sleep(3.0)
-            print("Check3")
+    # Wait for both threads to complete (which they won't, as both are infinite loops)
+    handstate_detector_thread.join()
+    robot_control_thread.join()
