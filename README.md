@@ -1,4 +1,4 @@
-# Robot Control Program via Hand Gestures
+# Robot Control via Hand Gestures
 
 This project demonstrates controlling an e.DO robot using hand gestures detected via Mediapipe. The system captures hand gestures through a camera, processes them to recognize specific gestures, and then translates these gestures into commands to control the e.DO robot.
 
@@ -29,7 +29,6 @@ To get started, clone this repository and install the necessary dependencies. We
 1. Clone the repository:
    ```sh
    git clone https://github.com/eisa22/Robot_Gesture_Control.git
-   cd robot-control-gestures
    ```
 
 2. Create and activate the conda environment:
